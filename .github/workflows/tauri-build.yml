@@ -16,13 +16,15 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
+            target: aarch64-apple-darwin
             args: "--target aarch64-apple-darwin"
           - platform: windows-latest
+            target: x86_64-pc-windows-msvc
             args: ""
     runs-on: ${{ matrix.platform }}
-    defaults:
-      run:
-        working-directory: desktop
+    env:
+      CARGO_HOME: ${{ runner.tool_cache }}/cargo
+      RUSTUP_HOME: ${{ runner.tool_cache }}/rustup
     steps:
       - uses: actions/checkout@v4
 
@@ -30,41 +32,55 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: desktop/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci || npm install
+        working-directory: desktop
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
 
-      - name: Install Rust (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
-
-      - name: Install Rust (Windows)
-        if: runner.os == 'Windows'
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: desktop/src-tauri
 
+      - name: Build frontend (Vite)
+        working-directory: desktop
+        run: npm run build
+
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        working-directory: desktop
+        run: npx tauri build ${{ matrix.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "DevFlow ${{ github.ref_name }}"
-          releaseBody: |
+          name: devflow-${{ matrix.platform }}-bundle
+          path: |
+            desktop/src-tauri/target/release/bundle/
+          if-no-files-found: warn
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "DevFlow ${{ github.ref_name }}"
+          body: |
             自动构建发布 — DevFlow ${{ github.ref_name }}
             - Web 工作台: Vue3 + Vite + TS + Pinia
             - 后端: NestJS + Prisma + MySQL + Redis
             - 桌面端: Tauri 2.0（macOS / Windows）
-          releaseDraft: false
+          files: |
+            desktop/src-tauri/target/release/bundle/dmg/*.dmg
+            desktop/src-tauri/target/release/bundle/msi/*.msi
+            desktop/src-tauri/target/release/bundle/nsis/*.exe
+          draft: false
           prerelease: false
-          args: ${{ matrix.args }}
