@@ -67,6 +67,14 @@ jobs:
             exit 1
           fi
 
+      - name: Upload Tauri build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tauri-build-log-${{ matrix.platform }}
+          path: /tmp/tauri-build.log
+          if-no-files-found: ignore
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
