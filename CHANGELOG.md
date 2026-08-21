@@ -1,5 +1,10 @@
 # Changelog
 
+## [v1.0.2] - 2026-08-21
+
+### 🐛 修复
+- **macOS 产物上传**：修正交叉编译路径（`target/aarch64-apple-darwin/release/bundle/`），macOS `.dmg` 现已成功上传到 Release
+
 ## [v1.0.1] - 2026-08-21
 
 ### 🐛 修复
