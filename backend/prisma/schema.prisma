@@ -1,0 +1,161 @@
+// ==================== 数据库连接（支持 MySQL/SQLite 切换） ====================
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==================== 用户与权限 ====================
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  displayName  String
+  role         String   @default("member") // admin | member | readonly
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  projects     Project[]
+  requirements Requirement[]
+}
+
+// ==================== 项目主档 ====================
+model Project {
+  id          String    @id @default(cuid())
+  name        String    @unique // 展示名，也是各明细表的业务关联键
+  scene       String    // 项目类别（管理系统/Agent开发/微信小程序/...）
+  scale       String    @default("中型") // 小型|中型|大型
+  ownTeam     String    @default("")
+  desc        String    @default("")
+  targetDate  DateTime?
+  status      String    @default("立项") // 立项|需求梳理|设计中|开发中|联调测试|已交付
+  currentStep Int       @default(1) // 当前流水线步骤 1-7
+  ownerId     String?
+  owner       User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  requirements Requirement[]
+  options      TechOption[]
+  designs      DesignPlan[]
+  fes          Frontend[]
+  bes          Backend[]
+  envs         EnvItem[]
+  dels         DeliverItem[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==================== 技术选型 ====================
+model TechOption {
+  id          String   @id @default(cuid())
+  proj        String   // Project.name
+  project     Project  @relation(fields: [proj], references: [name], onDelete: Cascade)
+  front       String
+  back        String
+  eff         Int      // 0-10
+  perf        Int      // 0-10
+  cost        Int      // 0-10
+  bm          Int      // 0-10
+  pros        String   @default("")
+  risks       String   @default("")
+  recmd       Boolean  @default(false) // AI 推荐
+  final       Boolean  @default(false) // 最终选定
+  source      String   @default("manual") // manual | ai
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== 需求 ====================
+model Requirement {
+  id          String    @id @default(cuid())
+  proj        String
+  project     Project   @relation(fields: [proj], references: [name], onDelete: Cascade)
+  title       String
+  desc        String    @default("")
+  priority    String    @default("P1") // P0|P1|P2
+  status      String    @default("待排期") // 待排期|设计中|开发中|联调中|已完成
+  ownerId     String?
+  owner       User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerName   String    @default("")
+  due         DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==================== 设计计划 ====================
+model DesignPlan {
+  id          String    @id @default(cuid())
+  proj        String
+  project     Project   @relation(fields: [proj], references: [name], onDelete: Cascade)
+  title       String
+  stage       String    // 需求分析|原型设计|UI定稿|开发实现|联调测试|交付上线
+  points      String    @default("")
+  start       DateTime?
+  end         DateTime?
+  owner       String    @default("")
+  link        String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==================== 前端样式 ====================
+model Frontend {
+  id          String   @id @default(cuid())
+  proj        String
+  project     Project  @relation(fields: [proj], references: [name], onDelete: Cascade)
+  name        String
+  type        String   // UI组件库|设计规范|页面样式|图标库|主题变量
+  frame       String   @default("Vue3")
+  desc        String   @default("")
+  link        String   @default("")
+  status      String   @default("待选用") // 待选用|使用中|已弃用
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== 后端框架 ====================
+model Backend {
+  id          String   @id @default(cuid())
+  proj        String
+  project     Project  @relation(fields: [proj], references: [name], onDelete: Cascade)
+  name        String
+  type        String   // 后端架构|接口定义|框架配置
+  stack       String   @default("")
+  detail      String   @default("")
+  status      String   @default("规划中") // 规划中|开发中|已上线
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== 环境与联调 ====================
+model EnvItem {
+  id          String    @id @default(cuid())
+  proj        String
+  project     Project   @relation(fields: [proj], references: [name], onDelete: Cascade)
+  name        String
+  scene       String    // 开发环境搭建|测试环境部署|预发环境验证|前后端联调|代码评审|生产发布准备
+  status      String    @default("待启动") // 待启动|进行中|已完成|已阻塞
+  owner       String    @default("")
+  due         DateTime?
+  note        String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==================== 交付管理 ====================
+model DeliverItem {
+  id          String    @id @default(cuid())
+  proj        String
+  project     Project   @relation(fields: [proj], references: [name], onDelete: Cascade)
+  name        String
+  type        String    // 测试用例|缺陷跟踪|部署发布|上线交付|运维交接
+  env         String    @default("生产") // 开发|测试|预发|生产
+  status      String    @default("待处理") // 待处理|进行中|已完成|已阻塞
+  owner       String    @default("")
+  due         DateTime?
+  note        String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- 本工作台通过 WorkBuddy 资料库能力（library skill）搭建、存储和部署 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DevFlow · 全栈项目管理工作台</title>
+<style>
+:root{
+  --bg:#f4f7fc; --card:#ffffff; --ink:#1b2432; --sub:#5b6b81; --line:#e4eaf4;
+  --pri:#2563eb; --pri-2:#0ea5e9; --pri-bg:#eaf1fe;
+  --green:#16a34a; --green-bg:#e8f7ef; --red:#dc2626; --red-bg:#fdecec;
+  --orange:#ea7c24; --orange-bg:#fdf1e4; --purple:#7c3aed; --purple-bg:#f1ebfd;
+  --teal:#0d9488; --teal-bg:#e6f6f4; --gray:#64748b; --gray-bg:#eef1f6;
+  --r:14px; --sh:0 1px 3px rgba(21,32,54,.07),0 4px 14px rgba(21,32,54,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.6}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:14px;color:inherit}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--pri)}
+textarea{min-height:72px;resize:vertical}
+label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
+.ic{width:18px;height:18px;flex:none;vertical-align:-3px}
+.ic-s{width:14px;height:14px;vertical-align:-2px}
+.hidden{display:none!important}
+
+/* ---------- 顶栏 ---------- */
+.topbar{position:sticky;top:0;z-index:60;background:linear-gradient(120deg,#1d4ed8,#0ea5e9);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(29,78,216,.25)}
+.topbar .logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px}
+.topbar .logo svg{width:24px;height:24px}
+.topbar .tb-sub{font-size:11px;opacity:.85;border-top:none;margin-left:2px}
+.sync-chip{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;white-space:nowrap}
+.sync-chip .dot{width:8px;height:8px;border-radius:50%;background:#4ade80}
+.sync-chip.off .dot{background:#fbbf24}
+.sync-chip.busy .dot{background:#93c5fd;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.tb-btn{background:rgba(255,255,255,.16);color:#fff;padding:7px 13px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.tb-btn:hover{background:rgba(255,255,255,.28)}
+
+/* ---------- 布局 ---------- */
+main{max-width:1220px;margin:18px auto;padding:0 16px 90px}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:16px 18px;margin-bottom:16px;border:1px solid #eef2f9}
+.sec-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;margin-bottom:6px}
+.sec-title .n{background:var(--pri);color:#fff;font-size:11px;font-weight:700;width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}
+.sec-sub{font-size:12px;color:var(--sub);margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;background:var(--pri);color:#fff;min-height:40px}
+.btn:hover{filter:brightness(1.08)}
+.btn-ghost{background:var(--gray-bg);color:var(--ink)}
+.btn-green{background:var(--green)}.btn-red{background:var(--red)}
+.btn-sm{padding:5px 12px;min-height:32px;font-size:12px;border-radius:8px}
+.btn-ai{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;min-height:40px;border-radius:10px;font-size:13px;font-weight:600;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff}
+.btn-ai:hover{filter:brightness(1.1)}
+.btn-ai.sm{padding:4px 10px;min-height:28px;font-size:11px;border-radius:7px}
+.pri-pill{font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;vertical-align:1px;margin-left:6px}
+.pp-0{background:var(--red-bg);color:var(--red)}.pp-1{background:var(--orange-bg);color:var(--orange)}.pp-2{background:var(--gray-bg);color:var(--gray)}
+
+/* ---------- AI 面板通用 ---------- */
+.ai-panel{background:linear-gradient(135deg,#f5f1ff 0%,#eef4ff 100%);border:1px solid #ddd3fa;border-radius:12px;padding:12px 14px;margin:8px 0 12px}
+.ai-panel h4{font-size:13px;color:var(--purple);display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ai-box{display:none;background:#fff;border:1px solid #e3dcfb;border-radius:10px;padding:12px;margin-top:10px;font-size:13px}
+.ai-box.show{display:block}
+.ai-box ul{padding-left:18px}.ai-box ol{padding-left:20px}
+.ai-box li{margin:4px 0}
+.ai-box .ai-note{color:var(--sub);font-size:12px;margin-top:8px}
+.ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.toast{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#1f2937;color:#fff;padding:9px 20px;border-radius:999px;font-size:13px;z-index:400;opacity:0;pointer-events:none;transition:opacity .25s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.show{opacity:1}
+
+/* ---------- 通用列表行 ---------- */
+.rows{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;flex-wrap:wrap}
+.row .grow{flex:1;min-width:180px}
+.row .rk{font-size:13px;font-weight:600}
+.row .rm{font-size:12px;color:var(--sub);margin-top:2px}
+.tag{display:inline-block;font-size:11px;padding:1px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.t-blue{background:var(--pri-bg);color:var(--pri)}.t-green{background:var(--green-bg);color:var(--green)}
+.t-red{background:var(--red-bg);color:var(--red)}.t-orange{background:var(--orange-bg);color:var(--orange)}
+.t-purple{background:var(--purple-bg);color:var(--purple)}.t-gray{background:var(--gray-bg);color:var(--gray)}
+.t-teal{background:var(--teal-bg);color:var(--teal)}
+.mini{font-size:12px;padding:3px 9px;border-radius:7px;background:var(--gray-bg);min-height:28px;display:inline-flex;align-items:center;gap:4px}
+.mini:hover{background:#e2e8f0}
+.mini.done{background:var(--green-bg);color:var(--green)}
+.mini.danger{background:var(--red-bg);color:var(--red)}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px;margin-top:6px}
+.form-grid .full{grid-column:1/-1}
+table.grid{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+table.grid th{text-align:left;font-size:12px;color:var(--sub);font-weight:600;padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap}
+table.grid td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.grid tr:hover td{background:#f8faff}
+.wipe-link{font-size:12px;color:var(--sub);text-decoration:underline;margin-top:10px;display:inline-block}
+.empty-hint{color:var(--sub);font-size:13px;padding:14px;text-align:center;background:var(--gray-bg);border-radius:10px;margin-top:8px}
+
+/* ---------- 首页视图 ---------- */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.hero h2{font-size:20px;display:flex;align-items:center;gap:10px}
+.hero p{color:var(--sub);font-size:13px;margin-top:4px}
+.stat-band{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.stat{background:#fff;border-radius:12px;border:1px solid #eef2f9;box-shadow:var(--sh);padding:14px}
+.stat .sv{font-size:24px;font-weight:800;color:var(--pri)}
+.stat .sl{font-size:12px;color:var(--sub);margin-top:2px}
+.pipe-strip{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:10px}
+.pipe-strip .stp{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--pri-bg);color:var(--pri);white-space:nowrap}
+.pipe-strip .arr{color:#b6c2d4;font-size:11px}
+.today-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:8px;flex-wrap:wrap}
+.today-item.overdue{border-color:#f3b4b4;background:#fff8f8}
+.today-item .grow{flex:1;min-width:160px}
+.today-item .tt{font-size:13px;font-weight:600}
+.today-item .tm{font-size:12px;color:var(--sub)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:10px}
+.pcard{background:#fff;border:1px solid #eef2f9;border-radius:var(--r);box-shadow:var(--sh);padding:16px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(21,32,54,.1)}
+.pcard h3{font-size:15px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.pcard .pv-sub{font-size:12px;color:var(--sub);margin:6px 0 10px}
+.prog{height:8px;background:var(--gray-bg);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),var(--pri-2));border-radius:99px;transition:width .4s}
+.pcard .pm{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chips .cp{font-size:10px;padding:2px 8px;border-radius:999px;background:var(--gray-bg);color:var(--sub)}
+.chips .cp.on{background:var(--green-bg);color:var(--green)}
+
+/* ---------- 向导 ---------- */
+.wizard{margin-top:8px}
+.wz-steps{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.wz-steps .s{flex:none;font-size:12px;padding:6px 12px;border-radius:999px;background:var(--gray-bg);color:var(--sub);white-space:nowrap;font-weight:600}
+.wz-steps .s.done{background:var(--green-bg);color:var(--green)}
+.wz-steps .s.cur{background:var(--pri);color:#fff}
+.wz-nav{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.scene-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.scene-opt{padding:11px 8px;border:2px solid var(--line);border-radius:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:#fff;transition:border-color .15s}
+.scene-opt:hover{border-color:#a8bef0}
+.scene-opt.sel{border-color:var(--pri);background:var(--pri-bg);color:var(--pri)}
+.scene-opt small{display:block;font-weight:400;color:var(--sub);font-size:11px;margin-top:3px}
+.rec-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:#fbfcff}
+.rec-card b{font-size:13px}
+.rec-card .rt{font-size:12px;color:var(--sub);margin-top:2px}
+
+/* ---------- 详情视图 ---------- */
+.dhead{background:linear-gradient(135deg,#233876,#155e97);color:#fff;border-radius:var(--r);padding:18px 20px;margin-bottom:16px}
+.dhead .dt{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dhead h2{font-size:19px}
+.dhead select{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:12px;padding:5px 30px 5px 10px;min-width:110px;width:auto}
+.dhead select option{color:#1b2432}
+.dhead .dp{margin-top:12px}
+.dhead .prog{background:rgba(255,255,255,.18)}
+.dhead .pm{display:flex;justify-content:space-between;font-size:11px;opacity:.9;margin-top:5px}
+.steps-mini{display:flex;gap:4px;margin-top:12px;flex-wrap:wrap}
+.steps-mini .sm2{font-size:10px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.14);white-space:nowrap}
+.steps-mini .sm2.on{background:#4ade80;color:#14532d;font-weight:700}
+.steps-mini .sm2.cur{background:#fbbf24;color:#451a03;font-weight:700}
+
+.steptabs{display:flex;gap:4px;background:#fff;border-radius:12px;border:1px solid #eef2f9;box-shadow:var(--sh);padding:6px;overflow-x:auto;margin-bottom:16px;position:sticky;top:58px;z-index:50}
+.steptab{flex:none;display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:600;color:var(--sub);white-space:nowrap;position:relative}
+.steptab:hover{background:var(--gray-bg)}
+.steptab.cur{background:var(--pri-bg);color:var(--pri)}
+.steptab .sn{font-size:10px;background:var(--gray-bg);color:var(--sub);width:17px;height:17px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center}
+.steptab.cur .sn{background:var(--pri);color:#fff}
+.steptab.comp::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+/* 步骤 1 选型对比 */
+.sel-bar-wrap{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+.sel-bar-wrap .sb-n{width:86px;color:var(--sub);text-align:right;flex:none}
+.sel-bar{flex:1;height:9px;background:var(--gray-bg);border-radius:99px;overflow:hidden}
+.sel-bar i{display:block;height:100%;border-radius:99px}
+.sel-bar-wrap .sb-v{width:24px;font-weight:700;flex:none}
+.opt-card{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;background:#fff}
+.opt-card.final{border-color:#f5b942;background:linear-gradient(135deg,#fffdf5,#fff)}
+.opt-card .oc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.opt-card .oc-h b{font-size:14px}
+.opt-card .oc-b{font-size:12px;color:var(--sub);margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* 步骤 3 甘特 */
+.gantt-wrap{overflow-x:auto;padding-bottom:4px}
+
+/* ---------- 移动端底部 Tab ---------- */
+.mobtab{display:none}
+@media (max-width:860px){
+  main{padding:0 12px 100px}
+  .stat-band{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .scene-grid{grid-template-columns:repeat(2,1fr)}
+  .dhead select{font-size:12px}
+  .topbar{padding:10px 12px}
+  .topbar .tb-btns .tb-btn .tbt{display:none}
+  .steptabs{position:static}
+}
+@media (max-width:768px){
+  .mobtab{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:80;padding:4px 4px calc(4px + env(safe-area-inset-bottom));box-shadow:0 -3px 14px rgba(21,32,54,.08)}
+  .mobtab button{flex:1;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--sub);border-radius:10px}
+  .mobtab button.cur{color:var(--pri);background:var(--pri-bg)}
+  .mobtab button svg{width:19px;height:19px}
+  table.grid.resp,table.grid.resp thead,table.grid.resp tbody,table.grid.resp tr,table.grid.resp td{display:block}
+  table.grid.resp thead{display:none}
+  table.grid.resp tr{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;padding:6px 10px;background:#fff}
+  table.grid.resp td{border:none;padding:5px 0;display:flex;align-items:center;gap:8px}
+  table.grid.resp td::before{content:attr(data-th);flex:none;width:74px;font-size:11px;color:var(--sub)}
+  .opt-card .oc-b{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/><path d="M12 11v9M12 11L4 6.5M12 11l8-4.5"/></svg>
+    <span>DevFlow</span>
+  </div>
+  <div style="font-size:12px;opacity:.9">技术选型与项目管理 · 全流程工作台</div>
+  <div class="sync-chip" id="syncChip"><span class="dot"></span><span id="syncTxt">本地模式</span></div>
+  <div class="tb-btns" style="display:flex;gap:8px">
+    <button class="tb-btn" id="btnExport"><svg class="ic-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg><span class="tbt">导出备份</span></button>
+    <button class="tb-btn" id="btnImport"><svg class="ic-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 3h16"/></svg><span class="tbt">导入恢复</span></button>
+  </div>
+</header>
+
+<main>
+  <!-- ================= 首页视图 ================= -->
+  <section id="vHome">
+    <div class="card">
+      <div class="hero">
+        <div>
+          <h2>项目总览</h2>
+          <p>每个项目一条完整流水线：选型 → 需求 → 设计计划 → 前端样式 → 后端框架 → 环境与联调 → 交付管理</p>
+          <div class="pipe-strip">
+            <span class="stp">1 技术选型</span><span class="arr">▸</span>
+            <span class="stp">2 需求管理</span><span class="arr">▸</span>
+            <span class="stp">3 设计计划</span><span class="arr">▸</span>
+            <span class="stp">4 前端样式</span><span class="arr">▸</span>
+            <span class="stp">5 后端框架</span><span class="arr">▸</span>
+            <span class="stp">6 环境与联调</span><span class="arr">▸</span>
+            <span class="stp">7 交付管理</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-ai" id="btnAIProj"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2zM19 14l.9 2.6L22.5 18l-2.6 1.4L19 22l-.9-2.6L15.5 18l2.6-1.4L19 14z"/></svg>AI 全流程规划</button>
+          <button class="btn" id="btnNewProj"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新建项目</button>
+        </div>
+      </div>
+      <div id="aiProj" class="ai-panel hidden" style="margin-top:14px">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 项目全局路线</h4>
+        <div class="sec-sub" style="margin-bottom:0">读取所有项目的选型结果、规模与目标日期，生成推进顺序、排期基线与风险提示；也可复制提示词发给外部 AI 深度规划。</div>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiProjOut">生成规划</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiProjOut">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiProjOut"></div>
+      </div>
+      <div class="stat-band" data-sp-bindable="database" data-sp-database-id="B9ZHFtfUgrOwYI6h0ByGMp">
+        <div class="stat"><div class="sv" id="stP">0</div><div class="sl">项目总数</div></div>
+        <div class="stat"><div class="sv" id="stR">0</div><div class="sl">需求总数</div></div>
+        <div class="stat"><div class="sv" id="stD">0</div><div class="sl">已交付项目</div></div>
+        <div class="stat"><div class="sv" id="stPend" style="color:var(--red)">0</div><div class="sl">今天/逾期待办</div></div>
+      </div>
+    </div>
+
+    <div class="card" id="cardWizard">
+      <div class="sec-title"><span class="n">+</span>新建项目 · 三步向导</div>
+      <div class="sec-sub">先选场景 → AI 推荐技术组合 → 确认创建。创建后自动依托推荐生成首阶段排期与环境清单。</div>
+      <div class="wizard">
+        <div class="wz-steps">
+          <span class="s cur" id="wsz1">1 基本信息</span>
+          <span class="s" id="wsz2">2 AI 推荐选型</span>
+          <span class="s" id="wsz3">3 确认创建</span>
+        </div>
+        <div id="wz1">
+          <div class="form-grid">
+            <div class="full"><label>项目名称 *</label><input name="p_name" id="pz_name" placeholder="如：供应链管理系统（也会作为数据表的关联键）"></div>
+            <div>
+              <label>项目类别 *（决定 AI 推荐的技术组合）</label>
+              <select id="pz_scene" name="p_scene"><option value="">请选择</option></select>
+            </div>
+            <div><label>规模</label>
+              <select id="pz_scale"><option>小型</option><option selected>中型</option><option>大型</option></select>
+            </div>
+            <div><label>目标上线日期</label><input type="date" id="pz_target"></div>
+            <div><label>负责人</label><input id="pz_owner" placeholder="你的名字"></div>
+            <div class="full"><label>项目描述</label><textarea id="pz_desc" placeholder="一句话说明项目要做什么"></textarea></div>
+          </div>
+        </div>
+        <div id="wz2" class="hidden">
+          <div class="ai-panel">
+            <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 推荐 · 按「<span id="wz2scene"></span>」场景生成的技术组合</h4>
+            <div class="sec-sub" style="margin-bottom:0">可勾选采纳（采纳后自动写入技术选型中心并标为最终选型），也可跳过稍后手动在选型中心对比。</div>
+            <div id="wzRecs"></div>
+            <div class="ai-actions">
+              <button class="btn-sm btn-ghost" data-ai="copy-wizard">复制 AI 提示词</button>
+            </div>
+          </div>
+        </div>
+        <div id="wz3" class="hidden">
+          <div id="wzSummary" style="font-size:13px;background:var(--gray-bg);border-radius:10px;padding:12px"></div>
+          <p style="font-size:12px;color:var(--sub);margin-top:10px">创建后将生成：项目主档 + 首个设计计划阶段（需求分析）+ 环境事项 6 项（开发环境搭建 → 生产发布准备）。</p>
+        </div>
+        <div class="wz-nav">
+          <button class="btn-ghost btn" id="wzPrev">上一步</button>
+          <button class="btn" id="wzNext">下一步</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>今天要处理</div>
+      <div class="sec-sub">自动汇总：逾期未完成事项、今天到期事项 · <b style="color:var(--red)">红色=已逾期</b> · 延期未完成的需求/项期不会消失，会继续留在这里。</div>
+      <div id="todayList"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 4v5"/></svg>
+        项目列表 <span class="tag t-blue" id="pjCountTag">0</span>
+      </div>
+      <div class="pgrid" id="projGrid"></div>
+      <button class="wipe-link" id="btnWipeSample">清空示例数据（首次体验后点此一键清除）</button>
+    </div>
+  </section>
+
+  <!-- ================= 详情视图 ================= -->
+  <section id="vDetail" class="hidden">
+    <div class="dhead">
+      <div class="dt">
+        <button class="tb-btn" id="btnBack">‹ 返回</button>
+        <h2 id="dName">项目</h2>
+        <select id="dStatus" name="d_status"></select>
+        <span class="tag t-orange" id="dScale"></span>
+        <span style="font-size:12px;opacity:.9" id="dDue"></span>
+      </div>
+      <div class="dp"><div class="prog"><i id="dProg" style="width:0%"></i></div>
+        <div class="pm"><span id="dProgTxt">整体进度 0%</span><span id="dMeta"></span></div>
+      </div>
+      <div class="steps-mini" id="stepsMini"></div>
+    </div>
+
+    <nav class="steptabs" id="stepTabs">
+      <button class="steptab cur" data-tab="s1"><span class="sn">1</span>技术选型</button>
+      <button class="steptab" data-tab="s2"><span class="sn">2</span>需求管理</button>
+      <button class="steptab" data-tab="s3"><span class="sn">3</span>设计计划</button>
+      <button class="steptab" data-tab="s4"><span class="sn">4</span>前端样式</button>
+      <button class="steptab" data-tab="s5"><span class="sn">5</span>后端框架</button>
+      <button class="steptab" data-tab="s6"><span class="sn">6</span>环境与联调</button>
+      <button class="steptab" data-tab="s7"><span class="sn">7</span>交付管理</button>
+    </nav>
+
+    <!-- 步骤1 技术选型 -->
+    <div class="card steppane" id="s1">
+      <div class="sec-title"><span class="n">1</span>技术选型中心</div>
+      <div class="sec-sub">为当前项目的类别做前端/后端框架对比：开发效率、性能体验、维护成本（越高越省钱）、后端匹配四项打分（0-10），加权综合分自动排序；标记「最终选型」后会成为后续步骤的基线。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 选型推荐</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiS1Out">按项目场景推荐</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS1Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS1Out" data-sp-bindable="database" data-sp-database-id="R8NwaMttSSG0xRoKxG8PQY"></div>
+      </div>
+      <h3 style="font-size:14px;margin:6px 0 2px">对比视图 <span style="font-size:11px;color:var(--sub);font-weight:400">（仅当前场景：按综合分排序）</span></h3>
+      <div id="selLegend" style="font-size:11px;color:var(--sub);margin-top:4px"></div>
+      <div id="selCompare"></div>
+      <h3 style="font-size:14px;margin:16px 0 2px">全部方案 <button class="btn-sm btn" id="btnAddOpt" style="margin-left:8px">+ 手动添加方案</button></h3>
+      <div id="optFormBox"></div>
+      <div id="optRows"></div>
+    </div>
+
+    <!-- 步骤2 需求管理 -->
+    <div class="card steppane hidden" id="s2">
+      <div class="sec-title"><span class="n">2</span>需求管理</div>
+      <div class="sec-sub">录入需求、AI 拆解子任务、P0/P1/P2 排序、跟踪状态（待排期→设计中→开发中→联调中→已完成）。工作流：完成本步后进入「设计计划」。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 需求拆解与优先级建议</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiS2Out">拆解当前需求</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS2Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS2Out"></div>
+      </div>
+      <form id="formReq" class="form-grid">
+        <div class="full"><label>需求标题 *</label><input name="r_title" data-sp-autofield title="需求标题" placeholder="如：支持批量导入Excel订单"></div>
+        <div><label>优先级</label><select name="r_pri" title="优先级"></select></div>
+        <div><label>状态</label><select name="r_status" title="状态"></select></div>
+        <div><label>负责人</label><input name="r_owner" title="负责人"></div>
+        <div><label>截止日期</label><input type="date" name="r_due" title="截止日期"></div>
+        <div class="full"><label>需求描述</label><textarea name="r_desc" title="需求描述"></textarea></div>
+        <div class="full" style="margin-top:10px"><button type="submit" class="btn">+ 录入需求</button></div>
+      </form>
+      <div id="reqRows" data-sp-bindable="database" data-sp-database-id="p1zoQzh1vUwrM6NCakxbHO"></div>
+    </div>
+
+    <!-- 步骤3 设计计划 -->
+    <div class="card steppane hidden" id="s3">
+      <div class="sec-title"><span class="n">3</span>设计计划</div>
+      <div class="sec-sub">管理设计文档与阶段排期。AI 可按目标上线日期 + 需求数量自动生成阶段排期（含内联甘特图）；填写要点可生成格式化设计文档大纲。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 设计文档 & 排期</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="sched" data-target="aiS3Out">生成排期</button>
+          <button class="btn-sm btn" data-ai="doc" data-target="aiS3Out">生成设计文档大纲</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS3Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS3Out"></div>
+      </div>
+      <form id="formDesign" class="form-grid">
+        <div><label>文档/阶段标题 *</label><input name="g_title" title="文档标题" placeholder="如：原型设计"></div>
+        <div><label>设计阶段</label><select name="g_stage" title="设计阶段"></select></div>
+        <div><label>负责人</label><input name="g_owner" title="负责人"></div>
+        <div><label>开始日期</label><input type="date" name="g_start" title="开始日期"></div>
+        <div><label>结束日期</label><input type="date" name="g_end" title="结束日期"></div>
+        <div><label>产出链接</label><input name="g_link" title="产出链接" placeholder="原型/文档链接"></div>
+        <div class="full"><label>设计要点</label><textarea name="g_points" title="设计要点"></textarea></div>
+        <div class="full" style="margin-top:10px"><button type="submit" class="btn">+ 添加计划</button></div>
+      </form>
+      <h3 style="font-size:14px;margin:16px 0 2px">阶段排期（甘特图）</h3>
+      <div class="gantt-wrap" id="ganttBox" data-sp-bindable="database" data-sp-database-id="SMuSFpuqNXagLLKuBRtbXt"></div>
+      <div id="designRows"></div>
+    </div>
+
+    <!-- 步骤4 前端样式 -->
+    <div class="card steppane hidden" id="s4">
+      <div class="sec-title"><span class="n">4</span>前端样式</div>
+      <div class="sec-sub">管理 UI 组件库、设计规范、页面样式等前端资源。AI 会依据「最终选型」的前端框架推荐匹配组件库。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · UI 组件库 / 设计规范推荐</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiS4Out">按选型推荐 UI 资源</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS4Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS4Out"></div>
+      </div>
+      <form id="formFe" class="form-grid">
+        <div><label>资源名称 *</label><input name="f_name" title="资源名称" placeholder="如：Element Plus"></div>
+        <div><label>资源类型</label><select name="f_type" title="资源类型"></select></div>
+        <div><label>框架定位</label><select name="f_frame" title="框架定位"></select></div>
+        <div><label>状态</label><select name="f_status" title="状态"></select></div>
+        <div><label>链接</label><input name="f_link" title="链接" placeholder="https://..."></div>
+        <div class="full"><label>简述</label><input name="f_desc" title="简述" placeholder="一句话说明用途"></div>
+        <div class="full" style="margin-top:10px"><button type="submit" class="btn">+ 添加资源</button></div>
+      </form>
+      <table class="grid" id="feTable" data-sp-bindable="database" data-sp-database-id="N6Ks2Dyhp29HlxgpKVE0tf"></table>
+    </div>
+
+    <!-- 步骤5 后端框架 -->
+    <div class="card steppane hidden" id="s5">
+      <div class="sec-title"><span class="n">5</span>后端框架</div>
+      <div class="sec-sub">管理后端架构、接口定义与框架配置。AI 会生成推荐架构分层与接口设计规范，并可按统一 RESTful 模板一键生成接口清单。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 架构与接口规范</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiS5Out">生成架构与接口建议</button>
+          <button class="btn-sm btn" data-ai="apis" data-target="aiS5Out">生成 RESTful 接口清单</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS5Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS5Out" data-sp-bindable="database" data-sp-database-id="zEneBBtgfGIi476qm8gUtV"></div>
+      </div>
+      <form id="formBe" class="form-grid">
+        <div><label>条目名称 *</label><input name="b_name" title="条目名称" placeholder="如：订单模块接口定义"></div>
+        <div><label>条目类型</label><select name="b_type" title="条目类型"></select></div>
+        <div><label>框架/技术</label><input name="b_stack" title="框架技术" placeholder="如：Hono + Prisma"></div>
+        <div><label>状态</label><select name="b_status" title="状态"></select></div>
+        <div class="full"><label>详细描述</label><textarea name="b_desc" title="详细描述" placeholder="架构分层 / 接口列表 / 配置要点"></textarea></div>
+        <div class="full" style="margin-top:10px"><button type="submit" class="btn">+ 添加条目</button></div>
+      </form>
+      <table class="grid resp" id="beTable" data-sp-bindable="database" data-sp-database-id="zEneBBtgfGIi476qm8gUtV"></table>
+    </div>
+
+    <!-- 步骤6 环境与联调 -->
+    <div class="card steppane hidden" id="s6">
+      <div class="sec-title"><span class="n">6</span>环境与联调</div>
+      <div class="sec-sub">后端开发完成后的中间环节：开发环境搭建 → 测试环境部署 → 前后端联调 → 代码评审 → 预发环境验证 → 生产发布准备。「今天要处理」会汇总本步骤的逾期事项。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 环境清单 & 联调计划</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiS6Out">生成环境/联调清单</button>
+          <button class="btn-sm btn" data-ai="fill" data-target="aiS6Out">一键生成 6 项环境条目</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS6Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS6Out"></div>
+      </div>
+      <form id="formEnv" class="form-grid">
+        <div><label>事项名称 *</label><input name="e_name" title="事项名称" placeholder="如：搭建本地 Docker 开发环境"></div>
+        <div><label>环节</label><select name="e_scene" title="环节"></select></div>
+        <div><label>状态</label><select name="e_status" title="状态"></select></div>
+        <div><label>负责人</label><input name="e_owner" title="负责人"></div>
+        <div><label>截止日期</label><input type="date" name="e_due" title="截止日期"></div>
+        <div class="full"><label>备注</label><input name="e_note" title="备注"></div>
+        <div class="full" style="margin-top:10px"><button type="submit" class="btn">+ 添加事项</button></div>
+      </form>
+      <div id="envRows" data-sp-bindable="database" data-sp-database-id="BIwqrss3PWSWlCdRORh4zA"></div>
+    </div>
+
+    <!-- 步骤7 交付管理 -->
+    <div class="card steppane hidden" id="s7">
+      <div class="sec-title"><span class="n">7</span>交付管理</div>
+      <div class="sec-sub">跟踪测试、部署、上线交付全状态。AI 上线检查清单：测试覆盖 → 缺陷清零 → 预发验证 → 发布窗口 → 回滚预案 → 运维交接。</div>
+      <div class="ai-panel">
+        <h4><svg class="ic-s" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9l-6.1 1.2L12 16l-1.9-5.8L4 9l6.1-1.2L12 2z"/></svg>AI 规划助手 · 上线检查清单</h4>
+        <div class="ai-actions">
+          <button class="btn-sm btn" data-ai="make" data-target="aiS7Out">生成上线检查清单</button>
+          <button class="btn-sm btn-ghost" data-ai="copy" data-target="aiS7Out">复制 AI 提示词</button>
+        </div>
+        <div class="ai-box" id="aiS7Out"></div>
+      </div>
+      <form id="formDel" class="form-grid">
+        <div><label>交付事项 *</label><input name="x_name" title="交付事项" placeholder="如：回归测试-订单模块"></div>
+        <div><label>事项类型</label><select name="x_type" title="事项类型"></select></div>
+        <div><label>环境</label><select name="x_env" title="环境"></select></div>
+        <div><label>状态</label><select name="x_status" title="状态"></select></div>
+        <div><label>负责人</label><input name="x_owner" title="负责人"></div>
+        <div><label>截止日期</label><input type="date" name="x_due" title="截止日期"></div>
+        <div class="full"><label>备注</label><input name="x_note" title="备注"></div>
+        <div class="full" style="margin-top:10px"><button type="submit" class="btn">+ 添加交付事项</button></div>
+      </form>
+      <table class="grid resp" id="delTable" data-sp-bindable="database" data-sp-database-id="Ar8npW1ZiaAGAmxglSz7iy"></table>
+    </div>
+  </section>
+</main>
+
+<nav class="mobtab">
+  <button id="mHome" class="cur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>项目</button>
+  <button id="mToday"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>今天</button>
+  <button id="mExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>备份</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept=".json" class="hidden">
+<script>
+/* ================= 常量 ================= */
+var DB = {
+  projects:'B9ZHFtfUgrOwYI6h0ByGMp', options:'R8NwaMttSSG0xRoKxG8PQY', reqs:'p1zoQzh1vUwrM6NCakxbHO',
+  designs:'SMuSFpuqNXagLLKuBRtbXt', fes:'N6Ks2Dyhp29HlxgpKVE0tf', bes:'zEneBBtgfGIi476qm8gUtV',
+  envs:'BIwqrss3PWSWlCdRORh4zA', dels:'Ar8npW1ZiaAGAmxglSz7iy'
+};
+var DB_TITLE = {
+  projects:'项目', options:'技术选型', reqs:'需求', designs:'设计计划',
+  fes:'前端样式', bes:'后端框架', envs:'环境与联调', dels:'交付管理'
+};
+var RED_GATE = 'REDGATE_PROJ_BENCH_0429';
+var SAM_KEY = 'wb_tpb_samples_v1';
+var FLOW = ['立项','需求梳理','设计中','开发中','联调测试','已交付'];
+var PALETTE = ['#2563eb','#0ea5e9','#7c3aed','#ea7c24','#0d9488','#e0545a','#64748b','#c026d3'];
+var COLORS = {开发效率:'#2563eb',性能体验:'#7c3aed',维护成本:'#ea7c24',后端匹配:'#0d9488'};
+var METRICS = ['开发效率','性能体验','维护成本','后端匹配'];
+
+/* 场景知识库：AI 推荐引擎的数据基础 */
+var KB = {
+  '管理系统':{focus:'中后台赛道：重点是组件生态成熟、表单/表格能力强、权限体系完善，前端 Vue3 + Element Plus 已是国内事实标准；后端按团队语言栈选择。',
+    pairs:[
+      {front:'Vue3 + Vite + Element Plus',back:'NestJS + Prisma + MySQL',eff:9,perf:8,cost:8,bm:9,pros:'TS 全栈类型统一，装饰器风格易上手，Element Plus 中后台组件最全',risks:'Node 在高并发 CPU 密集场景需横向扩容'},
+      {front:'Vue3 + Vite + Element Plus',back:'Spring Boot + MyBatis-Plus + MySQL',eff:7,perf:9,cost:8,bm:7,pros:'企业级生态最成熟，人才储备充足，RPC/事务体系完善',risks:'Java 语法冗长，小团队迭代速度略慢'},
+      {front:'Vue3 + Vite + Element Plus',back:'Hono + Drizzle + PostgreSQL',eff:9,perf:9,cost:8,bm:8,pros:'超轻量、可跑在边缘节点、前后端共享 TS 类型',risks:'生态偏新，复杂企业中间件需自建'}
+    ],
+    uiRec:['Element Plus（首选，组件最全）','ECharts（数据可视化）','TinyMCE / wangEditor（富文本）','UnoCSS（样式原子化，可选）'],
+    arch:'经典三层架构：Controller（接口层）→ Service（业务层）→ DAO（数据层）；配 RBAC 权限模型（用户-角色-菜单三级），审计日志独立中间件。',
+    apiTmpl:[['GET','/api/{module}/list','分页列表'],['GET','/api/{module}/{id}','详情'],['POST','/api/{module}','新增'],['PUT','/api/{module}/{id}','更新'],['DELETE','/api/{module}/{id}','删除'],['POST','/api/{module}/export','数据导出'],['POST','/api/auth/login','登录'],['GET','/api/auth/menus','按角色下发菜单']]},
+  'Agent开发':{focus:'Agent 应用的关键是会话管理、LLM Provider 抽象与流式输出。前端必须有完善的流渲染（SSE/WebSocket）与 Markdown 富文本能力；后端要做 Provider 无关的抽象层。',
+    pairs:[
+      {front:'Vue3 + Vite + Pinia + markdown-it',back:'Hono + LangChain.js',eff:9,perf:9,cost:8,bm:9,pros:'边缘可部署、流式响应天然支持、TS 全栈一致',risks:'LangChain.js 文档更新快，版本需谨慎锁定'},
+      {front:'Next.js + Vercel AI SDK',back:'Node.js (Server Actions)',eff:9,perf:8,cost:7,bm:8,pros:'AI SDK 开箱即用，流式 UI 组件丰富',risks:'与 Vercel 生态耦合，私有部署成本上升'},
+      {front:'Vue3 + Vite',back:'Python FastAPI + LangChain',eff:8,perf:8,cost:7,bm:7,pros:'Python AI 生态最全（模型、向量库、评估工具）',risks:'前后端语言割裂，类型需 OpenAPI 生成器桥接'}
+    ],
+    uiRec:['Naive UI（TS 友好）','highlight.js（代码高亮）','mermaid（图表渲染）','v-md-editor / markdown-it'],
+    arch:'分层建议：API 层 → 会话编排层（Agent 循环/工具调用）→ Provider 抽象层（OpenAI/Anthropic/通义等可插拔）→ 存储层（会话记录 + Token 用量统计）。',
+    apiTmpl:[['POST','/api/chat','发送消息（SSE 流式）'],['GET','/api/sessions','会话列表'],['GET','/api/sessions/{id}','会话详情'],['POST','/api/providers','配置模型供应商'],['GET','/api/usage','Token 用量统计']]},
+  '微信小程序':{focus:'微信生态私域首选：原生性能最好、审核快；如团队已掌握 Vue 且后续可能跨端，可选 uni-app。后端要内置 wx.login 一键登录与微信支付能力。',
+    pairs:[
+      {front:'微信原生 + TypeScript + TDesign',back:'NestJS + MySQL + Redis',eff:7,perf:9,cost:8,bm:8,pros:'性能与体验最佳、官方组件兼容性好',risks:'只能覆盖微信一端'},
+      {front:'uni-app(Vue3) + uView Plus',back:'NestJS + MySQL',eff:9,perf:7,cost:9,bm:8,pros:'一套代码多端复用，Vue 团队零迁移成本',risks:'复杂动画/自定义渲染层性能略逊于原生'}
+    ],
+    uiRec:['TDesign 小程序版（腾讯官方）','uView Plus（uni-app 首选）','vant-weapp'],
+    arch:'后端要点：wx.login + code2session 换 openid、统一 Token 换取、微信支付/模板消息/订阅消息集成、敏感数据接口二次验签。',
+    apiTmpl:[['POST','/api/wx/login','小程序登录'],['GET','/api/{module}/list','分页列表'],['POST','/api/wx/pay','微信支付下单'],['POST','/api/wx/pay/notify','支付回调'],['POST','/api/wx/subscribe','订阅消息']]},
+  '支付宝小程序':{focus:'支付宝生态：支小宝/生活服务类场景。my.login、芝麻信用、当面付等平台能力是核心；MySQL 事务与幂等设计是支付类后端的生命线。',
+    pairs:[
+      {front:'支付宝原生 + TypeScript',back:'NestJS + MySQL',eff:7,perf:9,cost:8,bm:8,pros:'平台能力调用最直接，性能最佳',risks:'仅限支付宝一端'},
+      {front:'uni-app(Vue3)',back:'NestJS + MySQL',eff:9,perf:7,cost:9,bm:8,pros:'与微信小程序代码共用率高',risks:'平台差异化能力需条件编译'}
+    ],
+    uiRec:['Ant Design Mini（支付宝系官方风格）','uView Plus'],
+    arch:'后端要点：my.login 授权、当面付/电脑网站支付、芝麻信用分查询回调、幂等表 + 分布式锁防重复扣款。',
+    apiTmpl:[['POST','/api/ali/login','小程序登录'],['POST','/api/ali/pay','当面付/APP支付'],['POST','/api/ali/pay/notify','支付异步通知'],['GET','/api/ali/zmxy/score','芝麻分查询（需缓存）']]},
+  '抖音小程序':{focus:'抖音小程序流量分发强但审核严格、平台能力变动频繁。内容/电商类场景优先 tt.login + 担保支付。视频/直播能力建议服务端转推。',
+    pairs:[
+      {front:'抖音原生 + TDesign 抖音版',back:'NestJS + MySQL + Redis',eff:7,perf:9,cost:8,bm:8,pros:'平台跟进最快，审核通过率最高',risks:'单端覆盖'},
+      {front:'uni-app(Vue3)',back:'NestJS',eff:9,perf:7,cost:9,bm:8,pros:'多端一份代码，快速试错',risks:'平台新能力接入有延迟'}
+    ],
+    uiRec:['字节小程序 UI 组件（官方）','uView Plus'],
+    arch:'后端要点：tt.login 授权、担保支付/退款回调、IM 客服消息、内容安全检测（文本/图片先审后放）。',
+    apiTmpl:[['POST','/api/tt/login','小程序登录'],['POST','/api/tt/pay','担保支付'],['POST','/api/tt/pay/refund','退款'],['POST','/api/tt/content/check','内容安全检测']]},
+  'HBuilderX多平台':{focus:'一套代码同时发微信/支付宝/抖音/APP/H5：uni-app x（ts）或 uni-app（Vue3）是主线；nvue 仅在高性能页面局部使用。后端按团队语言栈选型。',
+    pairs:[
+      {front:'uni-app x + UTS',back:'NestJS + Prisma',eff:8,perf:9,cost:8,bm:8,pros:'编译为原生，APP 端性能接近原生',risks:'插件生态比 uni-app(Vue3) 少，uts 插件需评估'},
+      {front:'uni-app(Vue3) + uView Plus',back:'Hono/NestJS',eff:10,perf:7,cost:9,bm:9,pros:'生态最全、Vue 语法零学习成本、三平台小程序代码复用率高',risks:'APP 端复杂界面性能中等（WebView 渲染）'}
+    ],
+    uiRec:['uView Plus、wot-design-uni','条件编译统一封装平台差异','nvue 仅用于长列表/视频页'],
+    arch:'要点：封装平台差异（条件编译 #ifdef）、统一登录适配多平台 OAuth、接口层与服务端版本协商（灰度发布）。',
+    apiTmpl:[['POST','/api/auth/{platform}','多平台统一登录'],['GET','/api/version/check','版本检查/强制更新'],['GET','/api/config','平台差异化配置下发']]},
+  'Vue项目':{focus:'Vue 工程化项目（中后台/运营端/门户）：Vite + TS + Pinia + Vue Router 是标准底座；组件库按后台或 CLI Web 风格二选一；后端自由度高、按团队栈选择。',
+    pairs:[
+      {front:'Vue3 + Vite + Element Plus',back:'Express/NestJS',eff:9,perf:8,cost:9,bm:8,pros:'最主流中后台组合，任何团队都可接手',risks:'同质化高，需在工程化上加规约'},
+      {front:'Vue3 + Vite + Naive UI',back:'Hono/Express',eff:9,perf:9,cost:8,bm:8,pros:'Naive UI 从零用 TS 编写、类型完美、主题系统强大',risks:'组件数量比 Element 少'},
+      {front:'Vue3 + Nuxt3（SSR）',back:'NestJS',eff:7,perf:8,cost:7,bm:7,pros:'SEO 友好，适合门户/官网',risks:'SSR 心智负担与运维成本上升'}
+    ],
+    uiRec:['组件库：Element Plus / Naive UI / Arco Design','图表：ECharts','样式：UnoCSS + SCSS','状态：Pinia'],
+    arch:'后端按业务规模选：小型用 Express/Hono 快速交付；中大型用 NestJS 模块化；接口先 OpenAPI 后实现，前端 Orval 自动生成类型与请求层。',
+    apiTmpl:[['REST','统一前缀 /api/v1','版本化接口'],['规范','OpenAPI 3.0 先行','接口文档即契约'],['认证','JWT + Refresh Token','无状态认证']]}
+};
+
+/* 示例数据（离线 / 首次体验用，含 1 条逾期需求 + 1 条逾期环境事项） */
+function todayStr(d){var t=d||new Date();var m=('0'+(t.getMonth()+1)).slice(-2);var dd=('0'+t.getDate()).slice(-2);return t.getFullYear()+'-'+m+'-'+dd;}
+function addDays(n){var t=new Date();t.setDate(t.getDate()+n);return todayStr(t);}
+/*CH3*/
+</script>
+<!--AFTERCH2-->
+</body>
+</html>
