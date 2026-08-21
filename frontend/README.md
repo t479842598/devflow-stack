@@ -1,6 +1,6 @@
 # DevFlow 项目管理 · Vue 3 前端
 
-对接 NestJS 后端（默认 `http://localhost:3000/api/v1`）。
+对接 NestJS 后端（默认走 Vite 代理 `/api` → `http://localhost:3000`）。
 
 ## 启动
 
