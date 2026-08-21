@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.0.1] - 2026-08-21
+
+### 🐛 修复
+- **登录报错修复**：前端 API 路径 `/api/v1` → `/api`，与后端 `setGlobalPrefix('api')` 对齐，解决登录时报 `Unexpected token '<'`（响应 HTML 被当 JSON 解析）
+- **macOS 产物上传**：修正 GitHub Actions 产物路径，确保 macOS `.app` / `.dmg` 上传到 Release
+
 ## [v1.0.0] - 2026-08-21
 
 ### ✨ 正式版发布

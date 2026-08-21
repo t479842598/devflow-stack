@@ -1,6 +1,6 @@
 [package]
 name = "devflow-desktop"
-version = "1.0.0"
+version = "1.0.1"
 description = "DevFlow 项目管理桌面端"
 authors = ["devflow"]
 license = "MIT"

@@ -1,6 +1,6 @@
 {
   "name": "tech-flow-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "技术选型与项目管理工作台后端（Vue3 前端工作台用）",
   "private": true,
   "license": "MIT",
