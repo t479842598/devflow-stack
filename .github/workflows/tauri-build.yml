@@ -22,9 +22,6 @@ jobs:
             target: x86_64-pc-windows-msvc
             args: ""
     runs-on: ${{ matrix.platform }}
-    env:
-      CARGO_HOME: ${{ runner.tool_cache }}/cargo
-      RUSTUP_HOME: ${{ runner.tool_cache }}/rustup
     steps:
       - uses: actions/checkout@v4
 
