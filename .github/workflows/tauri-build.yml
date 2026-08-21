@@ -32,9 +32,8 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: desktop
-        run: |
-          rm -f package-lock.json
-          npm install --no-audit --no-fund
+        shell: bash
+        run: npm install --no-audit --no-fund
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -48,13 +47,18 @@ jobs:
 
       - name: Build frontend (Vite)
         working-directory: desktop
+        shell: bash
         run: npm run build
 
       - name: Build Tauri app
         working-directory: desktop
-        run: npx tauri build ${{ matrix.args }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -o pipefail
+          npx tauri build ${{ matrix.args }} 2>&1 | tee /tmp/tauri-build.log | tail -100
+          echo "::group::Tauri Build Log"
+          tail -60 /tmp/tauri-build.log || true
+          echo "::endgroup::"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
