@@ -80,6 +80,7 @@ jobs:
         with:
           name: devflow-${{ matrix.platform }}-bundle
           path: |
+            desktop/src-tauri/target/*/release/bundle/
             desktop/src-tauri/target/release/bundle/
           if-no-files-found: warn
 
@@ -99,6 +100,8 @@ jobs:
             desktop/src-tauri/target/release/bundle/macos/*.app
             desktop/src-tauri/target/release/bundle/msi/*.msi
             desktop/src-tauri/target/release/bundle/nsis/*.exe
-            desktop/src-tauri/target/release/bundle/**/*.app
+            desktop/src-tauri/target/*/release/bundle/dmg/*.dmg
+            desktop/src-tauri/target/*/release/bundle/macos/*.app
+            desktop/src-tauri/target/*/release/bundle/**/*.app
           draft: false
           prerelease: false
