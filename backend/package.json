@@ -1,10 +1,12 @@
 {
   "name": "tech-flow-backend",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "description": "技术选型与项目管理工作台后端（Vue3 前端工作台用）",
   "private": true,
   "license": "MIT",
-  "engines": { "node": ">=20.0.0" },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
